@@ -3,6 +3,7 @@ const logger = require('./../logger');
 const user = require('./../db/models/user')
 const crypto = require('crypto');
 const config = require('../config');
+const bcrypt = require('bcrypt');
 
 const validateUserData = (data) => {
     const schema = joi.object({
@@ -26,7 +27,9 @@ async function create(data) {
         return response;
     }
     const newUser = new user(data);
-    newUser.password = crypto.createHmac('sha512', config.auth.secret).update(newUser.password).digest('hex');
+    var salt = await bcrypt.genSalt(10);
+    newUser.password = await bcrypt.hash(newUser.password, salt);
+
     await newUser.save();
     response.user = newUser;
     return {

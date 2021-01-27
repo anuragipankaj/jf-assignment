@@ -1,4 +1,4 @@
-const mcache = require('memory-cache');
+var mcache = [];
 const config = require('./config');
 const logger = require('./logger');
 
@@ -11,8 +11,9 @@ const API_URL_ENUMS = Object.freeze({
 function loginCache(req, res, next) {
     {
         let key = ('__express__' + req.originalUrl || req.url) + '__user__' + JSON.stringify(req.body.mobileNumber)
+        logger.log(`\n CACHE - ${JSON.stringify(Object.keys(mcache))}\n`);
         logger.log(`CACHE-KEY - ${key}`);
-        let cachedData = mcache.get(key)
+        let cachedData = mcache[key];
         return {
             key: key,
             cache: cachedData
@@ -21,9 +22,11 @@ function loginCache(req, res, next) {
 }
 function registerCache(req, res, next) {
     {
+        logger.log(`\n CACHE - ${JSON.stringify(mcache)}\n`);
         let key = ('__express__' + req.originalUrl || req.url) + '__user__' + JSON.stringify(req.body.mobileNumber)
+        logger.log(`\n CACHE - ${JSON.stringify(Object.keys(mcache))}\n`);
         logger.log(`CACHE-KEY - ${key}`);
-        let cachedData = mcache.get(key)
+        let cachedData = mcache[key];
         return {
             key: key,
             cache: cachedData
@@ -33,6 +36,7 @@ function registerCache(req, res, next) {
 
 const cache = () => {
     return (req, res, next) => {
+
         logger.log(`CACHE-CHECK - ${JSON.stringify(req.body)}`);
         var cacheBody;
         switch (req.originalUrl) {
@@ -61,7 +65,7 @@ const cache = () => {
             res.json = (body) => {
                 logger.log(`CACHE-UPDATE - ${JSON.stringify(cacheBody)}`);
                 if (body.cache) body.cache.date = new Date();
-                mcache.put(cacheBody.key, body.cache, config.cache.duration * 1000);
+                mcache[cacheBody.key] = body.cache;
                 res.sendResponse(body.data)
             }
         }

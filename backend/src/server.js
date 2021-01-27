@@ -11,6 +11,9 @@ var corsOptions = {
 const app = express()
 app.use(cors(corsOptions));
 app.use(bodyParser.json())
+
+
+
 app.use('/api', require('./cache')(), require('./routes'))
 
 

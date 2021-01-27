@@ -4,6 +4,7 @@ const User = require('./../db/models/user')
 const crypto = require('crypto')
 const config = require('./../config')
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const validateLoginData = (data) => {
     const schema = joi.object({
@@ -12,6 +13,7 @@ const validateLoginData = (data) => {
     });
     return schema.validate(data);
 }
+
 async function login(cache, data) {
     var response = {};
     logger.log(`Validating the login credentials - ${JSON.stringify(data)}`)
@@ -35,7 +37,7 @@ async function login(cache, data) {
         });
     logger.log(`USER - ${JSON.stringify(user)}`)
 
-    if (user && verifyPassword(user, data.password)) {
+    if (user && (await verifyPassword(user, data.password))) {
         response.user = {
             id: user.id,
             mobileNumber: user.mobileNumber,
@@ -52,9 +54,9 @@ async function login(cache, data) {
         cache: { user }
     };
 }
-function verifyPassword(user, currentPassword) {
-    var currentHax = crypto.createHmac('sha512', config.auth.secret).update(currentPassword).digest('hex');
-    return user.password == currentHax;
+async function verifyPassword(user, currentPassword) {
+    //var currentHax = crypto.createHmac('sha512', config.auth.secret).update(currentPassword).digest('hex');
+    return await bcrypt.compare(currentPassword, user.password);
 }
 function getSession(user) {
     const token = jwt.sign({ sub: user.mobileNumber }, config.auth.secret, { expiresIn: '7d' });
